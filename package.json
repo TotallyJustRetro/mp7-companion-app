@@ -2,7 +2,7 @@
   "name": "mp7-companion-app",
   "version": "0.1.0",
   "private": true,
-  "description": "Mario Party 7 Companion - phone companion and Windows test bench",
+  "description": "Starboard — the Mario Party 7 player companion and Community Harbor app",
   "main": "electron/main.cjs",
   "author": "Community Harbor",
   "license": "MIT",
@@ -42,7 +42,7 @@
   },
   "build": {
     "appId": "com.communityharbor.mp7companion",
-    "productName": "MP7 Companion",
+    "productName": "Starboard - A Community Harbor App",
     "directories": {
       "output": "release"
     },
@@ -84,5 +84,5 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "productName": "Starboard - MP7 Companion"
+  "productName": "Starboard - A Community Harbor App"
 }
