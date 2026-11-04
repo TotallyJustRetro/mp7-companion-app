@@ -125,9 +125,10 @@ These require the companion server contract, Recomp-side implementation, and pla
 
 The current Starboard refresh takes its direction from the concept art and reference material supplied for this project:
 
-- The cruise-lobby menu concepts inform the bright aqua/mint environment, cream-and-gold trim, pastel menu tiles, and rounded arcade-like panels.
-- The settings and Mods/Achievements concepts inform the badge treatment, icon scale, and color-coded destinations.
-- The Star Showdown standings and board-map concepts inform the player color system, star motifs, and event presentation. They are references for the visual language; the phone app remains a player controller/dashboard, not a duplicate of the television scoreboard.
+- `Colorful Online Cruise Menu Board` and `Online Cruise Lobby Menu` inform the bright aqua/mint environment, cream-and-gold trim, pastel menu tiles, and rounded arcade-like panels.
+- `Colorful Game Settings Menu` and `Mods and Achievements Arcade Hub` inform the badge treatment, icon scale, and color-coded destinations.
+- `Colorful Sky Garden Board Maker UI` informs the bold framed-panel treatment and layered tool-card presentation.
+- `Star Showdown: Mario Party Map` and `Star Showdown: Mario Party Standings` inform the player color system, star motifs, and event presentation. They are visual references only; the phone app remains a player controller/dashboard, not a duplicate of the television scoreboard.
 - The MarioWiki and Spriters Resource pages are used for visual study of Mario Party 7's UI language and icon conventions.
 
 The interface artwork in this repository is original CSS styling and interface illustration. It does **not** bundle ripped Nintendo sprites, character models, or the Mario Party 7 wordmark. The project is an unofficial fan-made companion and is not affiliated with or endorsed by Nintendo.
