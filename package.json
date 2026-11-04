@@ -83,5 +83,6 @@
   },
   "engines": {
     "node": ">=22.12.0"
-  }
+  },
+  "productName": "Starboard - MP7 Companion"
 }
