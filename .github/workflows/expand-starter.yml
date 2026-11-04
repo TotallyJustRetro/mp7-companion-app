@@ -3,6 +3,7 @@ name: Expand MP7 Companion starter source
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
