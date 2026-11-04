@@ -38,6 +38,9 @@ jobs:
           mkdir -p /tmp/mp7-companion-unpacked
           unzip -q /tmp/mp7-companion.zip -d /tmp/mp7-companion-unpacked
           cp -a /tmp/mp7-companion-unpacked/mp7-companion-app/. .
+          # Add the Windows build workflow separately via the repository API;
+          # the Actions runner token cannot create workflow files on push.
+          rm -f .github/workflows/windows-build.yml
 
           rm -rf .bootstrap
           rm -f /tmp/mp7-companion.zip.b64 /tmp/mp7-companion.zip
