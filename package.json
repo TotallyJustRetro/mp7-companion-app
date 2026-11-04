@@ -1,0 +1,87 @@
+{
+  "name": "mp7-companion-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mario Party 7 Companion - phone companion and Windows test bench",
+  "main": "electron/main.cjs",
+  "author": "Community Harbor",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "dev:desktop": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "desktop": "electron .",
+    "dist:win": "npm run build && electron-builder --win nsis portable",
+    "dist:mac": "npm run build && electron-builder --mac dmg",
+    "dist:linux": "npm run build && electron-builder --linux AppImage deb",
+    "cap:sync": "npm run build && cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.6.0",
+    "lucide-react": "^0.468.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^6.2.1",
+    "concurrently": "^9.1.2",
+    "electron": "^45.2.2",
+    "electron-builder": "^26.18.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.communityharbor.mp7companion",
+    "productName": "MP7 Companion",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
