@@ -121,6 +121,21 @@ This is a front-end and desktop test harness milestone. The following are intent
 These require the companion server contract, Recomp-side implementation, and platform permission work. Do not enter real account credentials into this demo.
 
 
-## Visual identity
+## Visual identity and reference board
 
-The interface uses the supplied **Mario Party Hudson** display font for selected headings and Starboard branding, with a colorful cruise-inspired palette and ocean backdrop. The font is credited to its creator, Danny Kidd. The current prototype loads the font from a hosted web-font copy, so the first font load requires an internet connection; a bundled local font asset is planned for the next packaging pass.
+The current Starboard refresh takes its direction from the concept art and reference material supplied for this project:
+
+- The cruise-lobby menu concepts inform the bright aqua/mint environment, cream-and-gold trim, pastel menu tiles, and rounded arcade-like panels.
+- The settings and Mods/Achievements concepts inform the badge treatment, icon scale, and color-coded destinations.
+- The Star Showdown standings and board-map concepts inform the player color system, star motifs, and event presentation. They are references for the visual language; the phone app remains a player controller/dashboard, not a duplicate of the television scoreboard.
+- The MarioWiki and Spriters Resource pages are used for visual study of Mario Party 7's UI language and icon conventions.
+
+The interface artwork in this repository is original CSS styling and interface illustration. It does **not** bundle ripped Nintendo sprites, character models, or the Mario Party 7 wordmark. The project is an unofficial fan-made companion and is not affiliated with or endorsed by Nintendo.
+
+Selected headings use **Mario Party Hudson**, credited to Danny Kidd. The font is currently loaded from a hosted web-font copy, so the first font load requires an internet connection.
+
+Reference links:
+- [Mario Party 7 — MarioWiki](https://www.mariowiki.com/Mario_Party_7)
+- [Mario Party 7 assets — MarioWiki](https://www.mariowiki.com/Category:Mario_Party_7_assets)
+- [Mario Party 7 models — The Models Resource](https://models.spriters-resource.com/gamecube/marioparty7/)
+- [Mario Party 7 sprites — The Spriters Resource](https://www.spriters-resource.com/gamecube/marioparty7/)
