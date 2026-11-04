@@ -1,6 +1,6 @@
-# MP7 Companion
+# Starboard — MP7 Companion
 
-A cross-platform companion app for the Mario Party 7 Recomp project and Community Harbor. The same React/TypeScript interface is used by the Windows desktop test bench and the mobile app shell.
+Starboard is the cross-platform companion app for the Mario Party 7 Recomp project and Community Harbor. The same React/TypeScript interface is used by the Windows desktop test bench and the mobile app shell.
 
 > **Current status: prototype / demo simulator.** This source archive does not include a precompiled `.exe`. It includes the Windows desktop wrapper and scripts to run the test bench or build an installer/portable executable on a Windows PC. The app is not connected to the Recomp executable, a real online session service, or Community Harbor accounts yet.
 
@@ -119,3 +119,8 @@ This is a front-end and desktop test harness milestone. The following are intent
 - Native sensor / camera / haptic integrations.
 
 These require the companion server contract, Recomp-side implementation, and platform permission work. Do not enter real account credentials into this demo.
+
+
+## Visual identity
+
+The interface uses the supplied **Mario Party Hudson** display font for selected headings and Starboard branding, with a colorful cruise-inspired palette and ocean backdrop. The font is credited to its creator, Danny Kidd. The current prototype loads the font from a hosted web-font copy, so the first font load requires an internet connection; a bundled local font asset is planned for the next packaging pass.
