@@ -9,8 +9,8 @@ function createWindow() {
     height: 920,
     minWidth: 980,
     minHeight: 680,
-    title: 'MP7 Companion · Community Harbor',
-    backgroundColor: '#071f31',
+    title: 'Grand Star Cruise · MP7 Companion',
+    backgroundColor: '#071654',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
