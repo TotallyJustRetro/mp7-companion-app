@@ -1,6 +1,6 @@
-# Starboard — MP7 Companion
+# Grand Star Cruise — MP7 Companion
 
-Starboard is the cross-platform companion app for the Mario Party 7 Recomp project and Community Harbor. The same React/TypeScript interface is used by the Windows desktop test bench and the mobile app shell.
+Grand Star Cruise is the cross-platform companion app for the Mario Party 7 Recomp project and Community Harbor. The same React/TypeScript interface is used by the Windows desktop test bench and the mobile app shell.
 
 > **Current status: prototype / demo simulator.** This source archive does not include a precompiled `.exe`. It includes the Windows desktop wrapper and scripts to run the test bench or build an installer/portable executable on a Windows PC. The app is not connected to the Recomp executable, a real online session service, or Community Harbor accounts yet.
 
@@ -123,7 +123,7 @@ These require the companion server contract, Recomp-side implementation, and pla
 
 ## Visual identity and reference board
 
-The current Starboard refresh takes its direction from the concept art and reference material supplied for this project:
+The current Grand Star Cruise refresh takes its direction from the concept art and reference material supplied for this project:
 
 - `Colorful Online Cruise Menu Board` and `Online Cruise Lobby Menu` inform the bright aqua/mint environment, cream-and-gold trim, pastel menu tiles, and rounded arcade-like panels.
 - `Colorful Game Settings Menu` and `Mods and Achievements Arcade Hub` inform the badge treatment, icon scale, and color-coded destinations.
@@ -140,3 +140,10 @@ Reference links:
 - [Mario Party 7 assets — MarioWiki](https://www.mariowiki.com/Category:Mario_Party_7_assets)
 - [Mario Party 7 models — The Models Resource](https://models.spriters-resource.com/gamecube/marioparty7/)
 - [Mario Party 7 sprites — The Spriters Resource](https://www.spriters-resource.com/gamecube/marioparty7/)
+
+
+## Grand Star Cruise dashboard update
+
+The current interface uses the Grand Star Cruise navy, royal-blue, and gold design system with the embedded Mario Party Hudson font. The Overview includes a board selector, turn tracker, expandable Bowser Time event history, editable player coins and Stars, and a 12-character selector using MarioWiki portrait URLs.
+
+These are front-end demo tools. Live Recomp game-state transport, account synchronization, and real Workshop downloads remain separate integration work.
