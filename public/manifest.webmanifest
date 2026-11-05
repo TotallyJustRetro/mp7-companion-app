@@ -1,10 +1,10 @@
 {
-  "name": "MP7 Companion",
-  "short_name": "MP7 Companion",
-  "description": "Your Mario Party companion. Play together, your way.",
+  "name": "Grand Star Cruise",
+  "short_name": "Grand Star Cruise",
+  "description": "Your Mario Party 7 player companion. Play together, your way.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#071f31",
-  "theme_color": "#092c42",
+  "background_color": "#071654",
+  "theme_color": "#071654",
   "icons": []
 }
