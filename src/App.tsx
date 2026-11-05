@@ -4,15 +4,35 @@ import {
   Activity, ArrowDownUp, Award, Bell, Check, ChevronDown, CircleHelp, Coins, Compass,
   Download, Gamepad2, Gauge, Gift, Globe2, Home, Image, Link2, LockKeyhole,
   Mic, Monitor, Package, Play, Radio, RotateCcw, Send, Settings, ShieldCheck,
-  Smartphone, Sparkles, Star, Trophy, UserRound, Users, Vibrate, Wifi, WifiOff, X,
+  Smartphone, Sparkles, Star, Trophy, UserRound, Users, Vibrate, Wifi, WifiOff, X, Plus, Minus,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { CompanionMessage, ConnectionMode, MinigameDescriptor, PlayerState, PhoneStatus } from './domain/protocol';
 import { makeMessage, MINIGAMES } from './domain/protocol';
-import { cloneDemoPlayers, DEMO_SESSION_ID } from './lib/demoSession';
+import { cloneDemoPlayers, DEMO_SESSION_ID, CHARACTER_PORTRAITS } from './lib/demoSession';
+
+// MP7 logo from MarioWiki
+const MP7_LOGO = 'https://mario.wiki.gallery/images/thumb/d/d5/MP7_Logo.png/300px-MP7_Logo.png';
 
 type Page = 'overview' | 'controller' | 'profile' | 'rewards' | 'workshop' | 'settings';
 type LogEntry = { id: number; time: string; type: string; detail: string; tone?: 'good' | 'warn' | 'plain' };
+type BowserEvent = { id: number; turn: number; title: string; detail: string };
+
+const BOARDS = ['Pagoda Peak', 'Windmillville', 'Neon Heights', 'Grand Canal', 'Pyramid Park', "Bowser's Enchanted Inferno"] as const;
+const CHARACTERS = [
+  { id: 'mario', name: 'Mario' }, { id: 'luigi', name: 'Luigi' },
+  { id: 'peach', name: 'Peach' }, { id: 'yoshi', name: 'Yoshi' },
+  { id: 'wario', name: 'Wario' }, { id: 'waluigi', name: 'Waluigi' },
+  { id: 'daisy', name: 'Daisy' }, { id: 'birdo', name: 'Birdo' },
+  { id: 'toad', name: 'Toad' }, { id: 'boo', name: 'Boo' },
+  { id: 'drybones', name: 'Dry Bones' }, { id: 'dk', name: 'Donkey Kong' },
+] as const;
+const BOWSER_EVENT_PRESETS = [
+  { title: 'Bowser Revolution', detail: 'Coins shifted around the board.' },
+  { title: 'Bowser Shuffle', detail: 'Player positions were shuffled.' },
+  { title: 'Bowser Minigame', detail: 'A Bowser challenge interrupted the cruise.' },
+  { title: 'Bowser Coin Event', detail: 'A player was caught in a Bowser coin event.' },
+] as const;
 
 const pageLabels: Record<Page, string> = {
   overview: 'Overview', controller: 'Companion view', profile: 'Harbor ID', rewards: 'Rewards', workshop: 'Workshop', settings: 'Settings',
@@ -24,6 +44,14 @@ function timeLabel() {
 
 function statusLabel(status: PhoneStatus) {
   return ({ connected: 'Connected', not_connected: 'Not connected', disconnected: 'Disconnected', reconnecting: 'Reconnecting' })[status];
+}
+
+/** Displays a Mario Party 7 character face, with an initial fallback if the image is unavailable. */
+function CharPortrait({ characterId, characterName, className }: { characterId: string; characterName: string; className?: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = CHARACTER_PORTRAITS[characterId];
+  if (!src || failed) return <span style={{ fontSize: 22, lineHeight: 1 }}>{characterName.slice(0, 1)}</span>;
+  return <img src={src} alt={characterName} className={className} onError={() => setFailed(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />;
 }
 
 function App() {
@@ -45,6 +73,10 @@ function App() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [downloadPrompt, setDownloadPrompt] = useState<string | null>(null);
   const [installedItems, setInstalledItems] = useState<string[]>([]);
+  const [currentBoard, setCurrentBoard] = useState<string>(BOARDS[0]);
+  const [currentTurn, setCurrentTurn] = useState(7);
+  const [bowserEvents, setBowserEvents] = useState<BowserEvent[]>([]);
+  const [characterPickerPlayerId, setCharacterPickerPlayerId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const [canvasHasInk, setCanvasHasInk] = useState(false);
@@ -111,16 +143,51 @@ function App() {
     send({ type: 'MINIGAME_INPUT', sessionId: DEMO_SESSION_ID, playerId: activePlayerId, minigameId: activeMinigame.id, input, sentAt: Date.now() }, description);
   }
 
-  function updateCoins(amount: number) {
-    const next = { ...activePlayer, coins: Math.max(0, activePlayer.coins + amount) };
-    updatePlayer(activePlayerId, () => next);
+  function updatePlayerStat(playerId: string, stat: 'coins' | 'stars', amount: number) {
+    const current = players.find((player) => player.playerId === playerId);
+    if (!current) return;
+    const next = { ...current, [stat]: Math.max(0, current[stat] + amount) };
+    updatePlayer(playerId, () => next);
     sendPlayerState(next);
+  }
+
+  function updateCoins(amount: number) { updatePlayerStat(activePlayerId, 'coins', amount); }
+
+  function updateTurn(nextTurn: number) {
+    const bounded = Math.min(players[0]?.totalTurns ?? 15, Math.max(1, nextTurn));
+    setCurrentTurn(bounded);
+    setPlayers((current) => current.map((player) => ({ ...player, currentTurn: bounded })));
+    log('TURN_CHANGED', `Turn tracker moved to turn ${bounded} of ${players[0]?.totalTurns ?? 15}.`, 'plain');
+  }
+
+  function addBowserEvent(title: string) {
+    const preset = BOWSER_EVENT_PRESETS.find((event) => event.title === title);
+    if (!preset) return;
+    const event = { id: Date.now() + Math.random(), turn: currentTurn, ...preset };
+    setBowserEvents((current) => [event, ...current].slice(0, 20));
+    log('BOWSER_TIME', `${preset.title}: ${preset.detail}`, 'warn');
+    setNotice(`${preset.title} recorded for turn ${currentTurn}.`);
+  }
+
+  function setPlayerCharacter(playerId: string, characterId: string) {
+    const character = CHARACTERS.find((entry) => entry.id === characterId);
+    const player = players.find((entry) => entry.playerId === playerId);
+    if (!character || !player) return;
+    const next = { ...player, characterId: character.id, characterName: character.name };
+    updatePlayer(playerId, () => next);
+    sendPlayerState(next);
+    setCharacterPickerPlayerId(null);
+    setNotice(`${player.displayName} is now playing as ${character.name}.`);
   }
 
   function resetDemo() {
     setPlayers(cloneDemoPlayers());
     setActivePlayerId('P1');
     setActiveMinigame(null);
+    setCurrentBoard(BOARDS[0]);
+    setCurrentTurn(7);
+    setBowserEvents([]);
+    setCharacterPickerPlayerId(null);
     setSessionActive(true);
     setNotice('Demo session reset to its starting state.');
     log('DEMO_RESET', 'Restored sample player states and connected devices.', 'plain');
@@ -164,7 +231,7 @@ function App() {
       canvas.setPointerCapture(event.pointerId);
     } else if (action === 'move' && drawingRef.current) {
       context.lineTo(x, y);
-      context.strokeStyle = '#0c7183';
+      context.strokeStyle = '#FFD700';
       context.lineWidth = 7;
       context.lineCap = 'round';
       context.lineJoin = 'round';
@@ -185,8 +252,10 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand-lockup">
-          <div className="brand-mark"><span>✦</span></div>
-          <div><div className="brand-name">STARBOARD</div><div className="brand-subtitle">A COMMUNITY HARBOR APP</div></div>
+          <div className="brand-mark">
+            <img src={MP7_LOGO} alt="Mario Party 7" onError={(event) => { (event.target as HTMLImageElement).style.display = 'none'; }} />
+          </div>
+          <div><div className="brand-name">Grand Star Cruise</div><div className="brand-subtitle">MP7 COMPANION APP</div></div>
         </div>
         <div className="sidebar-label">YOUR HARBOR</div>
         <nav className="nav-list" aria-label="Main navigation">
@@ -213,14 +282,14 @@ function App() {
 
       <main className="main-area">
         <header className="topbar">
-          <div className="crumb"><span>Starboard</span><span className="crumb-slash">✦</span><strong>{pageLabels[page]}</strong></div>
+          <div className="crumb"><img src={MP7_LOGO} alt="Mario Party 7" onError={(event) => { (event.target as HTMLImageElement).style.display = 'none'; }} /><span className="crumb-slash">★</span><strong>{pageLabels[page]}</strong></div>
           <div className="topbar-actions">
             <div className="mode-switch" aria-label="Connection mode">
               <button className={mode === 'local' ? 'selected' : ''} onClick={() => setMode('local')}><Wifi size={14}/> Local</button>
               <button className={mode === 'online' ? 'selected' : ''} onClick={() => setMode('online')}><Globe2 size={14}/> Online</button>
             </div>
             <div className="connection-pill"><span className="online-dot"/>{sessionActive ? 'Demo session' : 'Session paused'}</div>
-            <button className="avatar-button" onClick={() => setPage('profile')} title="Open Harbor ID">H</button>
+            <button className="avatar-button" onClick={() => setPage('profile')} title="Open Harbor ID">★</button>
           </div>
         </header>
 
@@ -231,6 +300,9 @@ function App() {
             connectedCount={connectedCount} mode={mode} sessionActive={sessionActive} setSessionActive={setSessionActive}
             onPair={() => setPairingOpen(true)} onStart={startMinigame} onStatus={setPlayerStatus} logs={logs}
             onSendNotification={sendNotification} onReset={resetDemo} onUpdateCoins={updateCoins}
+            currentBoard={currentBoard} onBoardChange={setCurrentBoard} currentTurn={currentTurn} onTurnChange={updateTurn}
+            bowserEvents={bowserEvents} onAddBowserEvent={addBowserEvent}
+            onUpdatePlayerStat={updatePlayerStat} onPickCharacter={setCharacterPickerPlayerId}
           />}
           {page === 'controller' && <ControllerPage
             player={activePlayer} players={players} activePlayerId={activePlayerId} setActivePlayerId={setActivePlayerId}
@@ -247,6 +319,20 @@ function App() {
         </div>
       </main>
 
+      {characterPickerPlayerId && <Modal title={`Choose a character for ${players.find((player) => player.playerId === characterPickerPlayerId)?.displayName ?? 'player'}`} onClose={() => setCharacterPickerPlayerId(null)}>
+        <div className="character-select-grid">
+          {CHARACTERS.map((character) => {
+            const current = players.find((player) => player.playerId === characterPickerPlayerId);
+            const alreadyUsed = players.some((player) => player.playerId !== characterPickerPlayerId && player.characterId === character.id);
+            return <button key={character.id} className={`character-select-option${current?.characterId === character.id ? ' chosen' : ''}`} disabled={alreadyUsed} onClick={() => setPlayerCharacter(characterPickerPlayerId, character.id)}>
+              <span className="character-select-portrait"><CharPortrait characterId={character.id} characterName={character.name}/></span>
+              <strong>{character.name}</strong>
+              <small>{current?.characterId === character.id ? 'SELECTED' : alreadyUsed ? 'IN USE' : 'AVAILABLE'}</small>
+            </button>;
+          })}
+        </div>
+        <div className="modal-actions"><button className="button secondary" onClick={() => setCharacterPickerPlayerId(null)}>Cancel</button></div>
+      </Modal>}
       {pairingOpen && <Modal title="Connect a phone" onClose={() => setPairingOpen(false)}>
         <div className="pair-modal-content">
           <div className="pair-qr"><QRCodeSVG value={`mp7companion://demo/${DEMO_SESSION_ID}/${activePlayerId}`} size={174} bgColor="#ffffff" fgColor="#0b3045" /></div>
@@ -279,38 +365,61 @@ function OverviewPage(props: {
   connectedCount: number; mode: ConnectionMode; sessionActive: boolean; setSessionActive: (active: boolean) => void;
   onPair: () => void; onStart: (game: MinigameDescriptor) => void; onStatus: (id: string, status: PhoneStatus) => void;
   logs: LogEntry[]; onSendNotification: () => void; onReset: () => void; onUpdateCoins: (amount: number) => void;
+  currentBoard: string; onBoardChange: (board: string) => void; currentTurn: number; onTurnChange: (turn: number) => void;
+  bowserEvents: BowserEvent[]; onAddBowserEvent: (title: string) => void;
+  onUpdatePlayerStat: (playerId: string, stat: 'coins' | 'stars', amount: number) => void; onPickCharacter: (playerId: string) => void;
 }) {
   const [showAllPlayers, setShowAllPlayers] = useState(false);
+  const [showBowserEvents, setShowBowserEvents] = useState(false);
+  const totalTurns = props.players[0]?.totalTurns ?? 15;
   return <>
     <PageHeading eyebrow="YOUR GAME, IN YOUR POCKET" title="Welcome aboard." description="Your Harbor dashboard, player connections, and the game-event test deck." action={<button className="button primary" onClick={props.onPair}><Link2 size={16}/> Pair a phone</button>} />
     <section className="hero-banner">
       <div className="hero-orb orb-one"/><div className="hero-orb orb-two"/><div className="hero-content">
-        <div className="hero-kicker"><span className="hero-spark">✦</span> {props.mode === 'local' ? 'LOCAL CRUISE' : 'ONLINE CRUISE'} · TEST SESSION</div>
+        <div className="hero-kicker"><span className="hero-spark">★</span> {props.mode === 'local' ? 'LOCAL CRUISE' : 'ONLINE CRUISE'} · TEST SESSION</div>
         <h2>Ready for the<br/><em>next turn?</em></h2>
         <p>A pocket-sized cruise companion for player stats, items, rewards, and phone-powered minigames.</p>
-        <div className="hero-actions"><button className="button hero-button" onClick={() => props.onStart(MINIGAMES[1])}><Play size={15} fill="currentColor"/> Try a minigame</button><button className="hero-link" onClick={() => props.setSessionActive(!props.sessionActive)}>{props.sessionActive ? 'Pause demo session' : 'Resume demo session'} <ArrowDownUp size={14}/></button></div>
+        <div className="hero-actions">
+          <button className="button hero-button" onClick={() => props.onStart(MINIGAMES[1])}><Play size={15} fill="currentColor"/> Try a minigame</button>
+          <button className="hero-link" onClick={() => props.setSessionActive(!props.sessionActive)}>{props.sessionActive ? 'Pause demo session' : 'Resume demo session'} <ArrowDownUp size={14}/></button>
+          <label className="hero-board-picker"><span>BOARD</span><select value={props.currentBoard} onChange={(event) => props.onBoardChange(event.target.value)}>{BOARDS.map((board) => <option key={board} value={board}>{board}</option>)}</select></label>
+        </div>
       </div>
-      <div className="hero-ship" aria-hidden="true"><div className="ship-sail sail-back"/><div className="ship-sail sail-front"/><div className="ship-mast"/><div className="ship-body"/><div className="ship-flag">✦</div></div>
+      <div className="hero-ship" aria-hidden="true"><div className="ship-sail sail-back"/><div className="ship-sail sail-front"/><div className="ship-mast"/><div className="ship-body"/><div className="ship-flag">★</div></div>
       <div className="hero-bottomline"><span><span className="pulse-dot"/> SESSION READY</span><span>SESSION ID <strong>{DEMO_SESSION_ID}</strong></span><span>{props.mode === 'local' ? 'LOCAL NETWORK MODE' : 'ONLINE MODE PREVIEW'}</span></div>
     </section>
 
+    <section className="panel turn-tracker-panel">
+      <div className="turn-tracker-heading"><div><div className="eyebrow">BOARD PROGRESS</div><h2>Turn tracker</h2><p>{props.currentBoard}</p></div><div className="turn-number"><strong>{props.currentTurn}</strong><span>/ {totalTurns} TURNS</span></div></div>
+      <div className="turn-progress-track"><div style={{ width: `${(props.currentTurn / totalTurns) * 100}%` }}/></div>
+      <div className="turn-tracker-actions"><span>Turn {props.currentTurn} of {totalTurns}</span><div><button className="small-gold-button" onClick={() => props.onTurnChange(props.currentTurn - 1)} disabled={props.currentTurn <= 1}>− Previous</button><button className="small-gold-button" onClick={() => props.onTurnChange(props.currentTurn + 1)} disabled={props.currentTurn >= totalTurns}>Next turn +</button></div></div>
+    </section>
+
     <div className="stats-grid">
-      <StatCard icon={<Smartphone size={19}/>} label="PHONES CONNECTED" value={`${props.connectedCount} / ${props.players.length}`} sub="Optional for every player" accent="teal" />
-      <StatCard icon={<Users size={19}/>} label="PLAYERS IN SESSION" value="4" sub="Mixed phone + controller" accent="blue" />
-      <StatCard icon={<Radio size={19}/>} label="CONNECTION MODE" value={props.mode === 'local' ? 'Local' : 'Online'} sub="Demo transport preview" accent="gold" />
-      <StatCard icon={<Activity size={19}/>} label="PROTOCOL EVENTS" value={String(props.logs.length).padStart(2, '0')} sub="Latest events shown below" accent="violet" />
+      <StatCard icon={<Smartphone size={19}/>} label="PHONES CONNECTED" value={`${props.connectedCount} / ${props.players.length}`} sub="Optional for every player" accent="teal"/>
+      <StatCard icon={<Users size={19}/>} label="PLAYERS IN SESSION" value={String(props.players.length)} sub="Mixed phone + controller" accent="blue"/>
+      <StatCard icon={<Radio size={19}/>} label="CONNECTION MODE" value={props.mode === 'local' ? 'Local' : 'Online'} sub="Demo transport preview" accent="gold"/>
+      <StatCard icon={<Activity size={19}/>} label="PROTOCOL EVENTS" value={String(props.logs.length).padStart(2, '0')} sub="Latest events shown below" accent="violet"/>
     </div>
 
     <div className="section-row"><div><div className="eyebrow">SESSION ROSTER</div><h2 className="section-title">Players aboard</h2></div><button className="text-button" onClick={() => setShowAllPlayers(!showAllPlayers)}>{showAllPlayers ? 'Show less' : 'Manage players'} <ChevronDown size={14}/></button></div>
     <div className="players-grid">
-      {props.players.slice(0, showAllPlayers ? 8 : 4).map((player, index) => <PlayerCard key={player.playerId} player={player} index={index} selected={player.playerId === props.activePlayerId} onSelect={() => props.setActivePlayerId(player.playerId)} onStatus={props.onStatus} />)}
+      {props.players.slice(0, showAllPlayers ? 8 : 4).map((player, index) => <PlayerCard key={player.playerId} player={player} index={index} selected={player.playerId === props.activePlayerId} onSelect={() => props.setActivePlayerId(player.playerId)} onStatus={props.onStatus} onUpdateStat={props.onUpdatePlayerStat} onPickCharacter={() => props.onPickCharacter(player.playerId)} />)}
     </div>
+
+    <section className="panel bowser-panel">
+      <div className="panel-header"><div><div className="eyebrow bowser-eyebrow">UNEXPECTED BOARD EVENTS</div><h2><span className="bowser-mark">♛</span> Bowser Time log</h2></div><button className="bowser-toggle" onClick={() => setShowBowserEvents(!showBowserEvents)}>{showBowserEvents ? 'Collapse' : `View events (${props.bowserEvents.length})`} <ChevronDown size={15}/></button></div>
+      {showBowserEvents && <div className="bowser-log-content">
+        <div className="bowser-add-row"><span>Record an event for turn {props.currentTurn}</span><div className="bowser-event-actions">{BOWSER_EVENT_PRESETS.map((event) => <button key={event.title} onClick={() => props.onAddBowserEvent(event.title)}>+ {event.title}</button>)}</div></div>
+        {props.bowserEvents.length ? <div className="bowser-event-list">{props.bowserEvents.map((event) => <article className="bowser-event-item" key={event.id}><span className="bowser-event-turn">TURN {event.turn}</span><div><strong>{event.title}</strong><p>{event.detail}</p></div></article>)}</div> : <div className="bowser-empty">No Bowser events recorded yet. Add one when Bowser Time strikes.</div>}
+      </div>}
+    </section>
 
     <div className="dashboard-columns">
       <section className="panel event-panel">
         <div className="panel-header"><div><div className="eyebrow">TEST THE GAME BRIDGE</div><h2>Game Event Simulator</h2></div><span className="demo-tag">DEMO TOOLS</span></div>
-        <p className="panel-description">Send mock game events to the selected player. The simulator uses the same message names planned for the Recomp integration.</p>
-        <div className="selected-player-strip"><div className="player-avatar small-avatar">{props.activePlayer.characterName.slice(0, 1)}</div><div><strong>{props.activePlayer.displayName}</strong><span>{props.activePlayer.playerId} · {props.activePlayer.characterName}</span></div><StatusChip status={props.activePlayer.phoneStatus}/></div>
+        <p className="panel-description">Send mock game events to the selected player using the same message names planned for the Recomp integration.</p>
+        <div className="selected-player-strip"><div className="character-token small-avatar" style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,215,0,0.15)' }}><CharPortrait characterId={props.activePlayer.characterId} characterName={props.activePlayer.characterName}/></div><div><strong>{props.activePlayer.displayName}</strong><span>{props.activePlayer.playerId} · {props.activePlayer.characterName}</span></div><StatusChip status={props.activePlayer.phoneStatus}/></div>
         <div className="sim-controls"><div className="control-group"><label>PLAYER STATE</label><div className="control-buttons"><button onClick={() => props.onUpdateCoins(5)}><Coins size={14}/> +5 coins</button><button onClick={() => props.onUpdateCoins(-5)}><Coins size={14}/> −5 coins</button><button onClick={props.onSendNotification}><Bell size={14}/> Send alert</button></div></div>
           <div className="control-group"><label>START PHONE MINIGAME</label><div className="minigame-quick-grid">{MINIGAMES.map((game) => <button key={game.id} onClick={() => props.onStart(game)}><span>{game.kind === 'draw' ? '✎' : game.kind === 'trivia' ? '?' : game.kind === 'rhythm' ? '♫' : game.kind === 'tilt' ? '↔' : '◖'}</span>{game.title}</button>)}</div></div>
           <div className="sim-foot"><span><CircleHelp size={14}/> Not connected? Toadsworth falls back to controller play.</span><button onClick={props.onReset}><RotateCcw size={13}/> Reset demo</button></div>
@@ -329,11 +438,19 @@ function StatCard({ icon, label, value, sub, accent }: { icon: React.ReactNode; 
   return <div className="stat-card"><div className={`stat-icon ${accent}`}>{icon}</div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-sub">{sub}</div></div>;
 }
 
-function PlayerCard({ player, index, selected, onSelect, onStatus }: { player: PlayerState; index: number; selected: boolean; onSelect: () => void; onStatus: (id: string, status: PhoneStatus) => void }) {
+function PlayerCard({ player, index, selected, onSelect, onStatus, onUpdateStat, onPickCharacter }: { player: PlayerState; index: number; selected: boolean; onSelect: () => void; onStatus: (id: string, status: PhoneStatus) => void; onUpdateStat: (id: string, stat: 'coins' | 'stars', amount: number) => void; onPickCharacter: () => void }) {
   const colors = ['coral', 'mint', 'lilac', 'sun'];
   return <div className={`player-card ${selected ? 'selected' : ''}`} onClick={onSelect} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(); }}>
-    <div className="player-card-top"><div className={`character-token ${colors[index % colors.length]}`}>{player.characterName.slice(0, 1)}</div><div className="player-meta"><strong>{player.displayName}</strong><span>{player.playerId} · {player.characterName}</span></div><span className="player-menu-dot">•••</span></div>
-    <div className="player-numbers"><div><Coins size={14}/><strong>{player.coins}</strong><span>Coins</span></div><div><Star size={14}/><strong>{player.stars}</strong><span>Stars</span></div><div><Compass size={14}/><strong>{player.position}</strong><span>Space</span></div></div>
+    <div className="player-card-top">
+      <div className={`character-token ${colors[index % colors.length]}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CharPortrait characterId={player.characterId} characterName={player.characterName}/></div>
+      <div className="player-meta"><strong>{player.displayName}</strong><span>{player.playerId} · {player.characterName}</span></div>
+      <button className="player-edit-character" title={`Change ${player.displayName}'s character`} aria-label={`Change ${player.displayName}'s character`} onClick={(event) => { event.stopPropagation(); onPickCharacter(); }}>✎</button>
+    </div>
+    <div className="player-numbers">
+      <div><Coins size={14}/><strong>{player.coins}</strong><span>Coins</span><div className="stat-stepper"><button aria-label={`Remove 5 coins from ${player.displayName}`} onClick={(event) => { event.stopPropagation(); onUpdateStat(player.playerId, 'coins', -5); }} disabled={player.coins <= 0}><Minus size={11}/></button><button aria-label={`Add 5 coins to ${player.displayName}`} onClick={(event) => { event.stopPropagation(); onUpdateStat(player.playerId, 'coins', 5); }}><Plus size={11}/></button></div></div>
+      <div><Star size={14}/><strong>{player.stars}</strong><span>Stars</span><div className="stat-stepper"><button aria-label={`Remove a Star from ${player.displayName}`} onClick={(event) => { event.stopPropagation(); onUpdateStat(player.playerId, 'stars', -1); }} disabled={player.stars <= 0}><Minus size={11}/></button><button aria-label={`Add a Star to ${player.displayName}`} onClick={(event) => { event.stopPropagation(); onUpdateStat(player.playerId, 'stars', 1); }}><Plus size={11}/></button></div></div>
+      <div><Compass size={14}/><strong>{player.position}</strong><span>Space</span></div>
+    </div>
     <div className="player-card-bottom"><StatusChip status={player.phoneStatus}/><select aria-label={`Phone status for ${player.displayName}`} value={player.phoneStatus} onClick={(event) => event.stopPropagation()} onChange={(event) => onStatus(player.playerId, event.target.value as PhoneStatus)}><option value="connected">Connected</option><option value="not_connected">Not connected</option><option value="disconnected">Disconnected</option><option value="reconnecting">Reconnecting</option></select></div>
   </div>;
 }
@@ -362,7 +479,7 @@ function ControllerPage(props: {
 }
 
 function PhoneDashboard({ player }: { player: PlayerState }) {
-  return <div className="phone-dashboard"><div className="phone-brand"><span className="phone-brand-star">✦</span> STARBOARD <span className="phone-connected-dot"/></div><div className="phone-welcome"><span>AHOY, {player.displayName.toUpperCase()}!</span><h2>It's your<br/><em>adventure.</em></h2></div><div className="phone-character-card"><div className="phone-character-orb">{player.characterName.slice(0, 1)}</div><div><span>PLAYING AS</span><strong>{player.characterName}</strong><small>{player.playerId} · Turn {player.currentTurn}</small></div><span className="character-star">✦</span></div><div className="phone-stat-grid"><div><Coins size={16}/><span>COINS</span><strong>{player.coins}</strong></div><div><Star size={16}/><span>STARS</span><strong>{player.stars}</strong></div></div><div className="phone-section-title"><strong>YOUR ITEMS</strong><span>{player.inventory.length} slots used</span></div><div className="phone-items">{player.inventory.length ? player.inventory.map((item) => <div className="phone-item" key={item.id}><span>{item.icon}</span><strong>{item.name}</strong><small>×{item.quantity}</small></div>) : <div className="phone-empty-items">No items yet. Keep exploring!</div>}</div><div className="phone-turn-card"><div><span>BOARD POSITION</span><strong>Space {player.position}</strong></div><div className="turn-map-dots"><i/><i/><i/><i/><i/><i/><i/></div></div><div className="phone-toad-note"><span>✦</span><div><strong>Toadsworth says</strong><small>Enjoy your cruise! Your next turn is on the horizon.</small></div></div></div>;
+  return <div className="phone-dashboard"><div className="phone-brand"><span className="phone-brand-star">★</span> GRAND STAR CRUISE <span className="phone-connected-dot"/></div><div className="phone-welcome"><span>AHOY, {player.displayName.toUpperCase()}!</span><h2>It's your<br/><em>adventure.</em></h2></div><div className="phone-character-card"><div className="phone-character-orb">{player.characterName.slice(0, 1)}</div><div><span>PLAYING AS</span><strong>{player.characterName}</strong><small>{player.playerId} · Turn {player.currentTurn}</small></div><span className="character-star">✦</span></div><div className="phone-stat-grid"><div><Coins size={16}/><span>COINS</span><strong>{player.coins}</strong></div><div><Star size={16}/><span>STARS</span><strong>{player.stars}</strong></div></div><div className="phone-section-title"><strong>YOUR ITEMS</strong><span>{player.inventory.length} slots used</span></div><div className="phone-items">{player.inventory.length ? player.inventory.map((item) => <div className="phone-item" key={item.id}><span>{item.icon}</span><strong>{item.name}</strong><small>×{item.quantity}</small></div>) : <div className="phone-empty-items">No items yet. Keep exploring!</div>}</div><div className="phone-turn-card"><div><span>BOARD POSITION</span><strong>Space {player.position}</strong></div><div className="turn-map-dots"><i/><i/><i/><i/><i/><i/><i/></div></div><div className="phone-toad-note"><span>✦</span><div><strong>Toadsworth says</strong><small>Enjoy your cruise! Your next turn is on the horizon.</small></div></div></div>;
 }
 
 function MinigameScreen(props: React.ComponentProps<typeof ControllerPage>) {
@@ -378,7 +495,7 @@ function MinigameScreen(props: React.ComponentProps<typeof ControllerPage>) {
 }
 
 function ProfilePage({ player, onPair }: { player: PlayerState; onPair: () => void }) {
-  return <><PageHeading eyebrow="YOUR COMMUNITY IDENTITY" title="Harbor ID" description="Your free player identity for Starboard and Community Harbor." action={<button className="button primary" onClick={onPair}><Link2 size={15}/> Connect device</button>} /><div className="profile-hero"><div className="profile-avatar-large">{player.displayName.slice(0, 1).toUpperCase()}<span>✦</span></div><div className="profile-info"><div className="profile-titleline"><h2>{player.displayName}</h2><span className="level-pill">LEVEL 18</span></div><p>Harbor Adventurer · Member profile preview</p><div className="xp-track"><div/><span>720 / 1,000 XP to Level 19</span></div><div className="profile-tags"><span><Trophy size={13}/> 12 achievements</span><span><Star size={13}/> 6 titles earned</span><span><Sparkles size={13}/> All rewards free</span></div></div><div className="profile-showcase"><span>FAVORITE CHARACTER</span><div className="showcase-character">{player.characterName.slice(0, 1)}</div><strong>{player.characterName}</strong></div></div><div className="section-row"><div><div className="eyebrow">PLAYER SNAPSHOT</div><h2 className="section-title">Your journey so far</h2></div></div><div className="stats-grid profile-stats"><StatCard icon={<Gamepad2 size={19}/>} label="MATCHES PLAYED" value="34" sub="Across supported sessions" accent="teal"/><StatCard icon={<Star size={19}/>} label="STARS EARNED" value="86" sub="Lifetime profile total" accent="gold"/><StatCard icon={<Coins size={19}/>} label="COINS COLLECTED" value="2,480" sub="Lifetime profile total" accent="blue"/><StatCard icon={<Award size={19}/>} label="ACHIEVEMENTS" value="12 / 40" sub="Permanent, never limited" accent="violet"/></div><div className="panel account-note"><ShieldCheck size={19}/><div><strong>Account linking is not active yet</strong><p>This first build uses a local demo profile. Real Harbor ID sign-in, website linking, syncing, and account recovery will be added with the Community Harbor service.</p></div></div></>;
+  return <><PageHeading eyebrow="YOUR COMMUNITY IDENTITY" title="Harbor ID" description="Your free player identity for Grand Star Cruise and Community Harbor." action={<button className="button primary" onClick={onPair}><Link2 size={15}/> Connect device</button>} /><div className="profile-hero"><div className="profile-avatar-large">{player.displayName.slice(0, 1).toUpperCase()}<span>✦</span></div><div className="profile-info"><div className="profile-titleline"><h2>{player.displayName}</h2><span className="level-pill">LEVEL 18</span></div><p>Harbor Adventurer · Member profile preview</p><div className="xp-track"><div/><span>720 / 1,000 XP to Level 19</span></div><div className="profile-tags"><span><Trophy size={13}/> 12 achievements</span><span><Star size={13}/> 6 titles earned</span><span><Sparkles size={13}/> All rewards free</span></div></div><div className="profile-showcase"><span>FAVORITE CHARACTER</span><div className="showcase-character">{player.characterName.slice(0, 1)}</div><strong>{player.characterName}</strong></div></div><div className="section-row"><div><div className="eyebrow">PLAYER SNAPSHOT</div><h2 className="section-title">Your journey so far</h2></div></div><div className="stats-grid profile-stats"><StatCard icon={<Gamepad2 size={19}/>} label="MATCHES PLAYED" value="34" sub="Across supported sessions" accent="teal"/><StatCard icon={<Star size={19}/>} label="STARS EARNED" value="86" sub="Lifetime profile total" accent="gold"/><StatCard icon={<Coins size={19}/>} label="COINS COLLECTED" value="2,480" sub="Lifetime profile total" accent="blue"/><StatCard icon={<Award size={19}/>} label="ACHIEVEMENTS" value="12 / 40" sub="Permanent, never limited" accent="violet"/></div><div className="panel account-note"><ShieldCheck size={19}/><div><strong>Account linking is not active yet</strong><p>This first build uses a local demo profile. Real Harbor ID sign-in, website linking, syncing, and account recovery will be added with the Community Harbor service.</p></div></div></>;
 }
 
 function RewardsPage({ installedItems }: { installedItems: string[] }) {
