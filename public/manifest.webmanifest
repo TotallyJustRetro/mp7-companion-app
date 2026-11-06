@@ -4,7 +4,7 @@
   "description": "Your Mario Party 7 player companion. Play together, your way.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#071654",
-  "theme_color": "#071654",
+  "background_color": "#FFD4A0",
+  "theme_color": "#F06080",
   "icons": []
 }
