@@ -142,8 +142,11 @@ Reference links:
 - [Mario Party 7 sprites — The Spriters Resource](https://www.spriters-resource.com/gamecube/marioparty7/)
 
 
-## Grand Star Cruise dashboard update
 
-The current interface uses the Grand Star Cruise navy, royal-blue, and gold design system with the embedded Mario Party Hudson font. The Overview includes a board selector, turn tracker, expandable Bowser Time event history, editable player coins and Stars, and a 12-character selector using MarioWiki portrait URLs.
+## Grand Star Cruise visual system v2
 
-These are front-end demo tools. Live Recomp game-state transport, account synchronization, and real Workshop downloads remain separate integration work.
+The current interface follows a warm MP7-inspired design direction: peach and golden ambient backgrounds, teal menu surfaces, pink panel frames, cream cards, and separate P1–P4 color identities. Overview, Rewards, Profile, Workshop, Controller, and Settings each receive a coordinated page background.
+
+The Overview includes the six-board tile selector, turn progress tracker, expandable Bowser event history, character-selection modal, and per-player coin/Star controls. Character labels and slot badges are rendered with original app styling; the public repository does not bundle Nintendo game logos, character portraits, or other copyrighted game artwork.
+
+The player-facing phone dashboard and minigame preview remain in place. Live Recomp transport, Community Harbor account services, and real Workshop downloads are still separate integration work.
