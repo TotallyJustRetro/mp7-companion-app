@@ -1528,3 +1528,244 @@ body {
   .player-slot-badge.has-marker { width:30px; min-width:30px; height:18px; }
   .crumb .crumb-mp7-logo { width:60px; max-height:22px; }
 }
+
+
+/* ── Local Mario Party 7 artwork ─────────────────────────────────────────── */
+.brand-mp7-logo {
+  width: 58px;
+  height: 44px;
+  flex: 0 0 auto;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,.14));
+}
+.hero-ship img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(20,35,80,.25));
+}
+.hero-character-art {
+  position: absolute;
+  z-index: 2;
+  right: 255px;
+  bottom: 24px;
+  height: 78%;
+  max-width: 24%;
+  object-fit: contain;
+  object-position: bottom center;
+  pointer-events: none;
+  filter: drop-shadow(0 7px 8px rgba(20,35,80,.24));
+}
+.hero-setsail-art {
+  position: absolute;
+  z-index: 0;
+  right: 0;
+  top: 0;
+  width: 36%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: .18;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.hero-content { position: relative; z-index: 3; }
+
+.board-menu-tile {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 138px;
+}
+.board-menu-tile::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(16,35,83,.04), rgba(16,35,83,.64));
+  pointer-events: none;
+}
+.board-tile-panel-art {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: .88;
+  transition: transform .18s ease;
+}
+.board-menu-tile:hover .board-tile-panel-art { transform: scale(1.045); }
+.board-tile-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-height: 105px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 4px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,.7);
+}
+.board-tile-logo {
+  display: block;
+  max-width: 92%;
+  width: auto;
+  height: 38px;
+  object-fit: contain;
+  object-position: left center;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.55));
+}
+.board-tile-content strong { color: #fff; font-size: 10px; }
+.board-tile-content small { color: #fff7da; }
+
+.player-slot-badge {
+  min-width: 0;
+  width: 43px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.player-slot-badge.has-marker img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.32));
+}
+.player-slot-badge:not(.has-marker) {
+  min-width: 23px;
+  width: auto;
+  height: 18px;
+  padding: 1px 4px;
+  border: 2px solid #fff;
+  border-radius: 6px;
+  background: #1a2060;
+  box-shadow: 0 2px 0 rgba(0,0,0,.22);
+}
+
+.game-currency-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.14));
+}
+.game-currency-icon.star { width: 24px; height: 24px; }
+.phone-brand-logo {
+  display: block;
+  width: 48px;
+  height: 28px;
+  object-fit: contain;
+}
+.phone-brand { gap: 7px; }
+.phone-stat-grid div {
+  grid-template-columns: 24px 1fr;
+}
+.phone-currency-icon {
+  width: 22px;
+  height: 22px;
+  grid-row: span 2;
+  object-fit: contain;
+}
+.phone-item-icon {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+.phone-item-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.phone-toadsworth-portrait {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  object-fit: contain;
+}
+.phone-toad-note > span { display: none; }
+
+.bowser-mark {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: inline-block;
+  padding: 2px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.mic-orb img {
+  display: block;
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+.profile-avatar-large .character-portrait,
+.profile-avatar-large .character-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  object-fit: cover;
+}
+.profile-avatar-large .character-initial { display: none !important; }
+.showcase-character { overflow: hidden; }
+.showcase-character img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+.stat-art-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+.achievement-icon img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.minigame-type-panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 10px 0 12px;
+}
+.minigame-type-panels img {
+  display: block;
+  width: 100%;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 7px;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(26,32,96,.12);
+}
+@media (max-width: 900px) {
+  .hero-character-art { right: 190px; max-width: 28%; height: 70%; }
+  .hero-setsail-art { width: 45%; }
+}
+@media (max-width: 640px) {
+  .brand-mp7-logo { width: 46px; height: 38px; }
+  .hero-character-art { right: 126px; bottom: 16px; height: 54%; max-width: 30%; opacity: .9; }
+  .hero-ship { right: 1%; top: auto; bottom: 22px; width: 150px; height: 112px; }
+  .hero-setsail-art { width: 58%; }
+  .board-menu-tile { min-height: 112px; padding: 8px; }
+  .board-tile-logo { height: 28px; max-width: 100%; }
+  .board-tile-content { min-height: 88px; }
+  .player-slot-badge { width: 34px; height: 27px; }
+}
