@@ -12,12 +12,13 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "desktop": "electron .",
-    "dist:win": "npm run build && electron-builder --win nsis portable --publish never",
+    "dist:win": "npm run build && npm run verify:assets && electron-builder --win nsis portable --publish never",
     "dist:mac": "npm run build && electron-builder --mac dmg",
     "dist:linux": "npm run build && electron-builder --linux AppImage deb",
     "cap:sync": "npm run build && cap sync",
     "cap:android": "cap open android",
-    "cap:ios": "cap open ios"
+    "cap:ios": "cap open ios",
+    "verify:assets": "node scripts/verify-assets.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.6.0",
