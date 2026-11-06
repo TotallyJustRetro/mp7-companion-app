@@ -1,4 +1,4 @@
-import type { PlayerState } from '../domain/protocol';
+import type { PlayerState } from './domain/protocol';
 
 export const DEMO_SESSION_ID = 'harbor-demo-7F3A';
 
