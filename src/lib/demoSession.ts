@@ -3,7 +3,7 @@ import type { PlayerState } from '../domain/protocol';
 export const DEMO_SESSION_ID = 'harbor-demo-7F3A';
 
 // All handoff artwork lives in public/assets. Vite serves it from /assets/.
-const asset = (fileName: string) => `${import.meta.env.BASE_URL}assets/${fileName}`;
+const asset = (fileName: string) => `/assets/${fileName}`;
 
 export const MP7_LOGO = asset('logo.png');
 export const MP7_LOGO_ALT = asset('logo-alt.png');
