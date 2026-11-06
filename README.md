@@ -160,3 +160,10 @@ The current interface follows a warm MP7-inspired design direction: peach and go
 The Overview includes the six-board tile selector, turn progress tracker, expandable Bowser event history, character-selection modal, and per-player coin/Star controls. Character labels and slot badges are rendered with original app styling; the public repository does not bundle Nintendo game logos, character portraits, or other copyrighted game artwork.
 
 The player-facing phone dashboard and minigame preview remain in place. When the local handoff pack is installed, the app displays its available character portraits, P1–P4 selection markers, Mario Party 7 logo, and microphone sprite. Characters without supplied portraits, or missing local files, fall back gracefully to initials. Live Recomp transport, Community Harbor account services, and real Workshop downloads are still separate integration work.
+
+
+## Local Mario Party 7 artwork
+
+The companion UI reads its artwork from `public/assets/` via the path constants in `src/lib/demoSession.ts`. Place the supplied local asset pack in the repository root so the files land at paths such as `public/assets/face-mario.png` and `public/assets/panel-pagoda-peak.png`.
+
+These game artwork files are intentionally excluded from the public Git repository by `.gitignore`; keep them local to your own checkout. Vite serves them at `/assets/<filename>`, and the Windows app bundles local `public/` assets during its build.
