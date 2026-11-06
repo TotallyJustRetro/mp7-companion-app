@@ -9,5 +9,6 @@ ios/
 .env.*
 !.env.example
 
-# Optional user-supplied MP7 artwork stays local and is not committed.
-public/assets/mp7-local/
+# User-supplied MP7 artwork stays local and is not committed to the public source repo.
+public/assets/*
+!public/assets/.gitkeep
