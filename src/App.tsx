@@ -9,10 +9,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import type { CompanionMessage, ConnectionMode, MinigameDescriptor, PlayerState, PhoneStatus } from './domain/protocol';
 import { makeMessage, MINIGAMES } from './domain/protocol';
-import { cloneDemoPlayers, DEMO_SESSION_ID, CHARACTER_PORTRAITS } from './lib/demoSession';
-
-// MP7 logo from MarioWiki
-const MP7_LOGO = 'https://mario.wiki.gallery/images/thumb/d/d5/MP7_Logo.png/300px-MP7_Logo.png';
+import { cloneDemoPlayers, DEMO_SESSION_ID } from './lib/demoSession';
 
 type Page = 'overview' | 'controller' | 'profile' | 'rewards' | 'workshop' | 'settings';
 type LogEntry = { id: number; time: string; type: string; detail: string; tone?: 'good' | 'warn' | 'plain' };
@@ -47,11 +44,8 @@ function statusLabel(status: PhoneStatus) {
 }
 
 /** Displays a Mario Party 7 character face, with an initial fallback if the image is unavailable. */
-function CharPortrait({ characterId, characterName, className }: { characterId: string; characterName: string; className?: string }) {
-  const [failed, setFailed] = useState(false);
-  const src = CHARACTER_PORTRAITS[characterId];
-  if (!src || failed) return <span style={{ fontSize: 22, lineHeight: 1 }}>{characterName.slice(0, 1)}</span>;
-  return <img src={src} alt={characterName} className={className} onError={() => setFailed(true)} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />;
+function CharPortrait({ characterName, className }: { characterId: string; characterName: string; className?: string }) {
+  return <span className={className ?? 'character-initial'} aria-label={characterName}>{characterName.slice(0, 1)}</span>;
 }
 
 function App() {
@@ -249,13 +243,11 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell page-${page}`}>
       <aside className="sidebar">
         <div className="brand-lockup">
-          <div className="brand-mark">
-            <img src={MP7_LOGO} alt="Mario Party 7" onError={(event) => { (event.target as HTMLImageElement).style.display = 'none'; }} />
-          </div>
-          <div><div className="brand-name">Grand Star Cruise</div><div className="brand-subtitle">MP7 COMPANION APP</div></div>
+          <div className="brand-mark"><span>✦</span></div>
+          <div><div className="brand-name">Grand Star Cruise</div><div className="brand-subtitle">A COMMUNITY HARBOR APP</div></div>
         </div>
         <div className="sidebar-label">YOUR HARBOR</div>
         <nav className="nav-list" aria-label="Main navigation">
@@ -282,7 +274,7 @@ function App() {
 
       <main className="main-area">
         <header className="topbar">
-          <div className="crumb"><img src={MP7_LOGO} alt="Mario Party 7" onError={(event) => { (event.target as HTMLImageElement).style.display = 'none'; }} /><span className="crumb-slash">★</span><strong>{pageLabels[page]}</strong></div>
+          <div className="crumb"><span className="crumb-brand">GRAND STAR CRUISE</span><span className="crumb-slash">✦</span><strong>{pageLabels[page]}</strong></div>
           <div className="topbar-actions">
             <div className="mode-switch" aria-label="Connection mode">
               <button className={mode === 'local' ? 'selected' : ''} onClick={() => setMode('local')}><Wifi size={14}/> Local</button>
@@ -320,7 +312,7 @@ function App() {
       </main>
 
       {characterPickerPlayerId && <Modal title={`Choose a character for ${players.find((player) => player.playerId === characterPickerPlayerId)?.displayName ?? 'player'}`} onClose={() => setCharacterPickerPlayerId(null)}>
-        <div className="character-select-grid">
+        <div className={`character-select-grid character-picker-${(characterPickerPlayerId ?? 'p1').toLowerCase()}`}>
           {CHARACTERS.map((character) => {
             const current = players.find((player) => player.playerId === characterPickerPlayerId);
             const alreadyUsed = players.some((player) => player.playerId !== characterPickerPlayerId && player.characterId === character.id);
@@ -382,11 +374,20 @@ function OverviewPage(props: {
         <div className="hero-actions">
           <button className="button hero-button" onClick={() => props.onStart(MINIGAMES[1])}><Play size={15} fill="currentColor"/> Try a minigame</button>
           <button className="hero-link" onClick={() => props.setSessionActive(!props.sessionActive)}>{props.sessionActive ? 'Pause demo session' : 'Resume demo session'} <ArrowDownUp size={14}/></button>
-          <label className="hero-board-picker"><span>BOARD</span><select value={props.currentBoard} onChange={(event) => props.onBoardChange(event.target.value)}>{BOARDS.map((board) => <option key={board} value={board}>{board}</option>)}</select></label>
+           
         </div>
       </div>
       <div className="hero-ship" aria-hidden="true"><div className="ship-sail sail-back"/><div className="ship-sail sail-front"/><div className="ship-mast"/><div className="ship-body"/><div className="ship-flag">★</div></div>
       <div className="hero-bottomline"><span><span className="pulse-dot"/> SESSION READY</span><span>SESSION ID <strong>{DEMO_SESSION_ID}</strong></span><span>{props.mode === 'local' ? 'LOCAL NETWORK MODE' : 'ONLINE MODE PREVIEW'}</span></div>
+    </section>
+
+    <section className="board-menu-panel">
+      <div className="board-menu-heading"><div><div className="eyebrow">CHOOSE YOUR DESTINATION</div><h2>Board selection</h2></div><span className="board-menu-current">NOW SAILING · {props.currentBoard.toUpperCase()}</span></div>
+      <div className="board-menu-tiles">
+        {BOARDS.map((board, index) => <button key={board} className={`board-menu-tile board-tile-${index + 1}${props.currentBoard === board ? ' selected' : ''}`} onClick={() => props.onBoardChange(board)} aria-pressed={props.currentBoard === board}>
+          <span className="board-tile-star">✦</span><strong>{board}</strong><small>{props.currentBoard === board ? 'SELECTED' : 'CHOOSE BOARD'}</small>
+        </button>)}
+      </div>
     </section>
 
     <section className="panel turn-tracker-panel">
@@ -440,9 +441,9 @@ function StatCard({ icon, label, value, sub, accent }: { icon: React.ReactNode; 
 
 function PlayerCard({ player, index, selected, onSelect, onStatus, onUpdateStat, onPickCharacter }: { player: PlayerState; index: number; selected: boolean; onSelect: () => void; onStatus: (id: string, status: PhoneStatus) => void; onUpdateStat: (id: string, stat: 'coins' | 'stars', amount: number) => void; onPickCharacter: () => void }) {
   const colors = ['coral', 'mint', 'lilac', 'sun'];
-  return <div className={`player-card ${selected ? 'selected' : ''}`} onClick={onSelect} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(); }}>
+  return <div className={`player-card player-color-${player.playerId.toLowerCase()} ${selected ? 'selected' : ''}`} onClick={onSelect} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(); }}>
     <div className="player-card-top">
-      <div className={`character-token ${colors[index % colors.length]}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CharPortrait characterId={player.characterId} characterName={player.characterName}/></div>
+      <div className={`character-token ${colors[index % colors.length]}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CharPortrait characterId={player.characterId} characterName={player.characterName}/><span className="player-slot-badge">{player.playerId}</span></div>
       <div className="player-meta"><strong>{player.displayName}</strong><span>{player.playerId} · {player.characterName}</span></div>
       <button className="player-edit-character" title={`Change ${player.displayName}'s character`} aria-label={`Change ${player.displayName}'s character`} onClick={(event) => { event.stopPropagation(); onPickCharacter(); }}>✎</button>
     </div>
@@ -479,7 +480,7 @@ function ControllerPage(props: {
 }
 
 function PhoneDashboard({ player }: { player: PlayerState }) {
-  return <div className="phone-dashboard"><div className="phone-brand"><img src={MP7_LOGO} alt="MP7" style={{ height: 18, objectFit: 'contain' }} onError={(event) => { (event.target as HTMLImageElement).style.display = 'none'; }}/> <span className="phone-brand-star">★</span> GRAND STAR CRUISE <span className="phone-connected-dot"/></div><div className="phone-welcome"><span>AHOY, {player.displayName.toUpperCase()}!</span><h2>It's your<br/><em>adventure.</em></h2></div><div className="phone-character-card"><div className="phone-character-orb" style={{ overflow: 'hidden' }}><CharPortrait characterId={player.characterId} characterName={player.characterName}/></div><div><span>PLAYING AS</span><strong>{player.characterName}</strong><small>{player.playerId} · Turn {player.currentTurn}</small></div><span className="character-star">✦</span></div><div className="phone-stat-grid"><div><Coins size={16}/><span>COINS</span><strong>{player.coins}</strong></div><div><Star size={16}/><span>STARS</span><strong>{player.stars}</strong></div></div><div className="phone-section-title"><strong>YOUR ITEMS</strong><span>{player.inventory.length} slots used</span></div><div className="phone-items">{player.inventory.length ? player.inventory.map((item) => <div className="phone-item" key={item.id}><span>{item.icon}</span><strong>{item.name}</strong><small>×{item.quantity}</small></div>) : <div className="phone-empty-items">No items yet. Keep exploring!</div>}</div><div className="phone-turn-card"><div><span>BOARD POSITION</span><strong>Space {player.position}</strong></div><div className="turn-map-dots"><i/><i/><i/><i/><i/><i/><i/></div></div><div className="phone-toad-note"><span>✦</span><div><strong>Toadsworth says</strong><small>Enjoy your cruise! Your next turn is on the horizon.</small></div></div></div>;
+  return <div className="phone-dashboard"><div className="phone-brand"><span className="phone-brand-star">✦</span> GRAND STAR CRUISE <span className="phone-connected-dot"/></div><div className="phone-welcome"><span>AHOY, {player.displayName.toUpperCase()}!</span><h2>It's your<br/><em>adventure.</em></h2></div><div className="phone-character-card"><div className="phone-character-orb" style={{ overflow: 'hidden' }}><CharPortrait characterId={player.characterId} characterName={player.characterName}/></div><div><span>PLAYING AS</span><strong>{player.characterName}</strong><small>{player.playerId} · Turn {player.currentTurn}</small></div><span className="character-star">✦</span></div><div className="phone-stat-grid"><div><Coins size={16}/><span>COINS</span><strong>{player.coins}</strong></div><div><Star size={16}/><span>STARS</span><strong>{player.stars}</strong></div></div><div className="phone-section-title"><strong>YOUR ITEMS</strong><span>{player.inventory.length} slots used</span></div><div className="phone-items">{player.inventory.length ? player.inventory.map((item) => <div className="phone-item" key={item.id}><span>{item.icon}</span><strong>{item.name}</strong><small>×{item.quantity}</small></div>) : <div className="phone-empty-items">No items yet. Keep exploring!</div>}</div><div className="phone-turn-card"><div><span>BOARD POSITION</span><strong>Space {player.position}</strong></div><div className="turn-map-dots"><i/><i/><i/><i/><i/><i/><i/></div></div><div className="phone-toad-note"><span>✦</span><div><strong>Toadsworth says</strong><small>Enjoy your cruise! Your next turn is on the horizon.</small></div></div></div>;
 }
 
 function MinigameScreen(props: React.ComponentProps<typeof ControllerPage>) {
