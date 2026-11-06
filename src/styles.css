@@ -1473,3 +1473,58 @@ body {
   .player-card .character-token { width:48px; height:48px; flex-basis:48px; }
   .player-slot-badge { min-width:18px; height:15px; font-size:6px; }
 }
+
+
+/* ── OPTIONAL LOCAL MP7 HANDOFF ART ───────────────────────── */
+.character-portrait {
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+  min-width:0;
+  overflow:hidden;
+  border-radius:inherit;
+}
+.character-portrait > .character-initial {
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+  grid-area:1 / 1;
+}
+.character-portrait > img {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+.player-slot-badge.has-marker {
+  width:34px;
+  min-width:34px;
+  height:20px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+.player-slot-badge.has-marker > span { color:transparent; text-shadow:none; }
+.player-slot-badge > img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+.mic-orb > img {
+  width:44px;
+  height:66px;
+  object-fit:contain;
+  display:block;
+}
+.crumb .crumb-mp7-logo { width:74px; max-height:26px; object-fit:contain; }
+@media (max-width:650px) {
+  .player-slot-badge.has-marker { width:30px; min-width:30px; height:18px; }
+  .crumb .crumb-mp7-logo { width:60px; max-height:22px; }
+}

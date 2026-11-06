@@ -9,7 +9,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import type { CompanionMessage, ConnectionMode, MinigameDescriptor, PlayerState, PhoneStatus } from './domain/protocol';
 import { makeMessage, MINIGAMES } from './domain/protocol';
-import { cloneDemoPlayers, DEMO_SESSION_ID } from './lib/demoSession';
+import { cloneDemoPlayers, DEMO_SESSION_ID, CHARACTER_PORTRAITS, PLAYER_SLOT_MARKERS, MP7_GAME_LOGO, MIC_CONTROL_ROOM_SPRITE } from './lib/demoSession';
 
 type Page = 'overview' | 'controller' | 'profile' | 'rewards' | 'workshop' | 'settings';
 type LogEntry = { id: number; time: string; type: string; detail: string; tone?: 'good' | 'warn' | 'plain' };
@@ -43,9 +43,17 @@ function statusLabel(status: PhoneStatus) {
   return ({ connected: 'Connected', not_connected: 'Not connected', disconnected: 'Disconnected', reconnecting: 'Reconnecting' })[status];
 }
 
-/** Displays a Mario Party 7 character face, with an initial fallback if the image is unavailable. */
-function CharPortrait({ characterName, className }: { characterId: string; characterName: string; className?: string }) {
-  return <span className={className ?? 'character-initial'} aria-label={characterName}>{characterName.slice(0, 1)}</span>;
+/** Displays a supplied local MP7 portrait, with an initial fallback if the file is missing. */
+function CharPortrait({ characterId, characterName }: { characterId: string; characterName: string }) {
+  const portraitSrc = CHARACTER_PORTRAITS[characterId];
+  return <span className="character-portrait" role="img" aria-label={characterName}>
+    <span className="character-initial" aria-hidden="true" style={{ display: portraitSrc ? 'none' : 'grid' }}>{characterName.slice(0, 1)}</span>
+    {portraitSrc && <img src={portraitSrc} alt="" aria-hidden="true" onError={(event) => {
+      event.currentTarget.style.display = 'none';
+      const fallback = event.currentTarget.previousElementSibling as HTMLElement | null;
+      if (fallback) fallback.style.display = 'grid';
+    }}/>}
+  </span>;
 }
 
 function App() {
@@ -274,7 +282,7 @@ function App() {
 
       <main className="main-area">
         <header className="topbar">
-          <div className="crumb"><span className="crumb-brand">GRAND STAR CRUISE</span><span className="crumb-slash">✦</span><strong>{pageLabels[page]}</strong></div>
+          <div className="crumb"><span className="crumb-brand">GRAND STAR CRUISE</span><span className="crumb-slash">✦</span><img className="crumb-mp7-logo" src={MP7_GAME_LOGO} alt="Mario Party 7" onError={(event) => { event.currentTarget.style.display = "none"; }}/><strong>{pageLabels[page]}</strong></div>
           <div className="topbar-actions">
             <div className="mode-switch" aria-label="Connection mode">
               <button className={mode === 'local' ? 'selected' : ''} onClick={() => setMode('local')}><Wifi size={14}/> Local</button>
@@ -443,7 +451,13 @@ function PlayerCard({ player, index, selected, onSelect, onStatus, onUpdateStat,
   const colors = ['coral', 'mint', 'lilac', 'sun'];
   return <div className={`player-card player-color-${player.playerId.toLowerCase()} ${selected ? 'selected' : ''}`} onClick={onSelect} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onSelect(); }}>
     <div className="player-card-top">
-      <div className={`character-token ${colors[index % colors.length]}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CharPortrait characterId={player.characterId} characterName={player.characterName}/><span className="player-slot-badge">{player.playerId}</span></div>
+      <div className={`character-token ${colors[index % colors.length]}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CharPortrait characterId={player.characterId} characterName={player.characterName}/><span className={`player-slot-badge${PLAYER_SLOT_MARKERS[player.playerId] ? ' has-marker' : ''}`} aria-label={player.playerId}>
+        <span>{player.playerId}</span>
+        {PLAYER_SLOT_MARKERS[player.playerId] && <img src={PLAYER_SLOT_MARKERS[player.playerId]} alt="" aria-hidden="true" onError={(event) => {
+          event.currentTarget.style.display = 'none';
+          event.currentTarget.parentElement?.classList.remove('has-marker');
+        }}/>}
+      </span></div>
       <div className="player-meta"><strong>{player.displayName}</strong><span>{player.playerId} · {player.characterName}</span></div>
       <button className="player-edit-character" title={`Change ${player.displayName}'s character`} aria-label={`Change ${player.displayName}'s character`} onClick={(event) => { event.stopPropagation(); onPickCharacter(); }}>✎</button>
     </div>
@@ -490,7 +504,11 @@ function MinigameScreen(props: React.ComponentProps<typeof ControllerPage>) {
     {game.kind === 'rhythm' && <div className="rhythm-widget"><div className="rhythm-orbit"><span>♫</span><i/><i/><i/></div><span className="tap-label">TAP TO THE BEAT</span><button className="big-tap-button" onClick={() => { const count = props.tapCount + 1; props.setTapCount(count); props.onInput({ action: 'tap', count, at: Date.now() }, `Rhythm tap ${count} sent.`); }}><span>TAP!</span></button><small>{props.tapCount} taps registered</small></div>}
     {game.kind === 'tilt' && <div className="tilt-widget"><div className="tilt-meter"><div className="tilt-needle" style={{ transform: `translateX(${props.tiltValue * 1.1}px) rotate(${props.tiltValue * 0.35}deg)` }}/><span>← BALANCE →</span></div><div className="tilt-buttons"><button onClick={() => { const value = Math.max(-80, props.tiltValue - 20); props.setTiltValue(value); props.onInput({ axis: 'x', value, simulated: true }, 'Simulated phone tilt left.'); }}>◀ LEFT</button><button onClick={() => { props.setTiltValue(0); props.onInput({ axis: 'x', value: 0, simulated: true }, 'Tilt returned to center.'); }}>CENTER</button><button onClick={() => { const value = Math.min(80, props.tiltValue + 20); props.setTiltValue(value); props.onInput({ axis: 'x', value, simulated: true }, 'Simulated phone tilt right.'); }}>RIGHT ▶</button></div><small>Desktop preview uses buttons. A phone build will read motion sensors after permission.</small></div>}
     {game.kind === 'draw' && <div className="drawing-widget"><span>DRAW: A HAPPY STAR</span><canvas ref={props.canvasRef} width={300} height={230} onPointerDown={(event) => props.onCanvasPointer(event, 'start')} onPointerMove={(event) => props.onCanvasPointer(event, 'move')} onPointerUp={(event) => props.onCanvasPointer(event, 'end')} onPointerLeave={(event) => props.onCanvasPointer(event, 'end')}/><button className="submit-drawing" onClick={props.onSubmitDrawing}><Send size={14}/> SUBMIT DRAWING</button><small>Touch or click and drag to draw.</small></div>}
-    {game.kind === 'microphone' && <div className="mic-widget"><div className={`mic-orb ${props.micEnabled ? 'enabled' : ''}`}><Mic size={34}/></div><strong>{props.micEnabled ? 'MICROPHONE READY' : 'MICROPHONE OPTIONAL'}</strong><p>{props.micEnabled ? 'Permission granted for this demo minigame.' : 'Your microphone is only used after you grant permission.'}</p><button onClick={props.onRequestMic}>{props.micEnabled ? 'MICROPHONE ENABLED' : 'ENABLE MICROPHONE'}</button><small>You can decline and use a traditional controller when supported.</small></div>}
+    {game.kind === 'microphone' && <div className="mic-widget"><div className={`mic-orb ${props.micEnabled ? 'enabled' : ''}`}><Mic size={34} style={{ display: 'none' }}/><img src={MIC_CONTROL_ROOM_SPRITE} alt="" aria-hidden="true" onError={(event) => {
+      event.currentTarget.style.display = 'none';
+      const fallback = event.currentTarget.previousElementSibling as HTMLElement | null;
+      if (fallback) fallback.style.display = 'block';
+    }}/></div><strong>{props.micEnabled ? 'MICROPHONE READY' : 'MICROPHONE OPTIONAL'}</strong><p>{props.micEnabled ? 'Permission granted for this demo minigame.' : 'Your microphone is only used after you grant permission.'}</p><button onClick={props.onRequestMic}>{props.micEnabled ? 'MICROPHONE ENABLED' : 'ENABLE MICROPHONE'}</button><small>You can decline and use a traditional controller when supported.</small></div>}
     <div className="minigame-phone-footer"><span>✦</span> INPUT IS SENT TO YOUR GAME SESSION</div>
   </div>;
 }

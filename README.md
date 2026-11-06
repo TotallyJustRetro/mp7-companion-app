@@ -25,6 +25,16 @@ Grand Star Cruise is the cross-platform companion app for the Mario Party 7 Reco
 - For iOS packaging: macOS + Xcode.
 - For Windows packaging: Windows is recommended. The included GitHub Actions workflow builds the Windows installers on a Windows runner.
 
+## Optional local Mario Party 7 artwork
+
+The companion app supports the images supplied in the restyle handoff ZIP without adding them to the public Git repository.
+
+1. Extract the local artwork pack so the PNG files land in `public/assets/mp7-local/` at the project root.
+2. Keep that folder in place when running or building the app. It is intentionally listed in `.gitignore`.
+3. The app loads the eight supplied character portraits, P1–P4 markers, the Mario Party 7 logo, and the microphone sprite. Missing files use text/icon fallbacks.
+
+The artwork is local to your working copy; it is not published by the repository's CI build.
+
 ## Run on your PC
 
 ```bash
@@ -131,7 +141,7 @@ The current Grand Star Cruise refresh takes its direction from the concept art a
 - `Star Showdown: Mario Party Map` and `Star Showdown: Mario Party Standings` inform the player color system, star motifs, and event presentation. They are visual references only; the phone app remains a player controller/dashboard, not a duplicate of the television scoreboard.
 - The MarioWiki and Spriters Resource pages are used for visual study of Mario Party 7's UI language and icon conventions.
 
-The interface artwork in this repository is original CSS styling and interface illustration. It does **not** bundle ripped Nintendo sprites, character models, or the Mario Party 7 wordmark. The project is an unofficial fan-made companion and is not affiliated with or endorsed by Nintendo.
+The shipped interface is original CSS/React styling. Optional Mario Party 7 artwork from the supplied handoff pack can be loaded from `public/assets/mp7-local/`; that folder is Git-ignored and is not included in public source commits. The project is an unofficial fan-made companion and is not affiliated with or endorsed by Nintendo.
 
 Selected headings use **Mario Party Hudson**, credited to Danny Kidd. The font is currently loaded from a hosted web-font copy, so the first font load requires an internet connection.
 
@@ -149,4 +159,4 @@ The current interface follows a warm MP7-inspired design direction: peach and go
 
 The Overview includes the six-board tile selector, turn progress tracker, expandable Bowser event history, character-selection modal, and per-player coin/Star controls. Character labels and slot badges are rendered with original app styling; the public repository does not bundle Nintendo game logos, character portraits, or other copyrighted game artwork.
 
-The player-facing phone dashboard and minigame preview remain in place. Live Recomp transport, Community Harbor account services, and real Workshop downloads are still separate integration work.
+The player-facing phone dashboard and minigame preview remain in place. When the local handoff pack is installed, the app displays its available character portraits, P1–P4 selection markers, Mario Party 7 logo, and microphone sprite. Characters without supplied portraits, or missing local files, fall back gracefully to initials. Live Recomp transport, Community Harbor account services, and real Workshop downloads are still separate integration work.
